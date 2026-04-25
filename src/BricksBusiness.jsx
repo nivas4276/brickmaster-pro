@@ -375,7 +375,7 @@ export default function App() {
         </div>
       </div>
 
-      <main style={{ padding: "18px 14px 105px", maxWidth: 900, margin: "0 auto" }}>
+      <main style={{ padding: "18px 14px 145px", maxWidth: 900, margin: "0 auto" }}>
         {render()}
       </main>
 
@@ -388,8 +388,8 @@ export default function App() {
           background: T.surface,
           borderTop: `1px solid ${T.border}`,
           display: "flex",
-          overflowX: "auto",
-          padding: "5px 0",
+          justifyContent: "space-between",
+          padding: "10px 6px",
           zIndex: 100,
         }}
       >
@@ -398,21 +398,27 @@ export default function App() {
             key={t.id}
             onClick={() => setTab(t.id)}
             style={{
-              flex: "0 0 auto",
+              flex: 1,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 2,
-              padding: "6px 12px",
+              justifyContent: "center",
+              gap: 6,
+              padding: "10px 4px",
               background: "none",
               border: "none",
               cursor: "pointer",
               color: tab === t.id ? T.accent : T.muted,
-              borderTop: tab === t.id ? `2px solid ${T.accent}` : "2px solid transparent",
             }}
           >
-            <span style={{ fontSize: 16 }}>{t.icon}</span>
-            <span style={{ fontSize: 10, fontWeight: tab === t.id ? 800 : 500 }}>
+            <span style={{ fontSize: 26 }}>{t.icon}</span>
+
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: tab === t.id ? 800 : 500,
+              }}
+            >
               {t.label}
             </span>
           </button>
