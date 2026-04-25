@@ -1675,10 +1675,10 @@ function Salaries({ data, reload }) {
 }
 
 // ── SALES & CUSTOMERS ─────────────────────────────────────────────────────────
-function CustomersSales({ data, reload }) {
+function CustomersSales({ data, reload, defaultTab = "Sales" }) {
   const { saving, save } = useSaving();
 
-  const [sub, setSub] = useState("Sales");
+  const [sub, setSub] = useState(defaultTab);
   const [showSaleM, setSaleM] = useState(false);
   const [showCustM, setCustM] = useState(false);
   const [editSale, setES] = useState(null);
@@ -1697,9 +1697,26 @@ function CustomersSales({ data, reload }) {
     note: "",
   });
 
-  const [cForm, setCF] = useState({ name: "", contact: "", location: "", note: "" });
-  const [payForm, setPF] = useState({ date: today(), amount: "", mode: "Cash", note: "" });
-  const [ePF, setEPF] = useState({ date: "", amount: "", mode: "Cash", note: "" });
+  const [cForm, setCF] = useState({
+    name: "",
+    contact: "",
+    location: "",
+    note: "",
+  });
+
+  const [payForm, setPF] = useState({
+    date: today(),
+    amount: "",
+    mode: "Cash",
+    note: "",
+  });
+
+  const [ePF, setEPF] = useState({
+    date: "",
+    amount: "",
+    mode: "Cash",
+    note: "",
+  });
 
   const sf = (v) => setSF((p) => ({ ...p, ...v }));
 
@@ -1773,7 +1790,11 @@ function CustomersSales({ data, reload }) {
 
     const newPays = [
       ...(sale.payments || []),
-      { id: Date.now(), ...payForm, amount: Number(payForm.amount || 0) },
+      {
+        id: Date.now(),
+        ...payForm,
+        amount: Number(payForm.amount || 0),
+      },
     ];
 
     await save(async () => {
@@ -1791,7 +1812,9 @@ function CustomersSales({ data, reload }) {
     if (!sale) return;
 
     const newPays = (sale.payments || []).map((p) =>
-      p.id === payId ? { ...p, ...ePF, amount: Number(ePF.amount || 0) } : p
+      p.id === payId
+        ? { ...p, ...ePF, amount: Number(ePF.amount || 0) }
+        : p
     );
 
     await save(async () => {
@@ -1849,15 +1872,21 @@ function CustomersSales({ data, reload }) {
     : data.sales;
 
   const sorted = [...filtered].sort((a, b) => b.date.localeCompare(a.date));
+
   const totalRev = data.sales.reduce((a, s) => a + Number(s.total_amount || 0), 0);
   const totalOut = data.sales.reduce((a, s) => a + saleDue(s), 0);
 
-  const pcol = { Cash: T.green, UPI: T.blue, Cheque: T.purple, "Bank Transfer": T.cyan };
+  const pcol = {
+    Cash: T.green,
+    UPI: T.blue,
+    Cheque: T.purple,
+    "Bank Transfer": T.cyan,
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <SH
-        title="💰 Sales & Customers"
+        title={defaultTab === "By Customer" ? "👥 Customers" : "💰 Sales & Customers"}
         action={
           <>
             {saving && <span style={{ fontSize: 11, color: T.muted }}>Saving…</span>}
@@ -1903,7 +1932,7 @@ function CustomersSales({ data, reload }) {
               <Card key={s.id} style={{ borderColor: due > 0 ? T.yellow + "44" : T.green + "33" }}>
                 {isEdit ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontWeight: 700, color: T.accent, marginBottom: 4 }}>Edit Sale</div>
+                    <div style={{ fontWeight: 700, color: T.accent }}>Edit Sale</div>
 
                     <Inp label="Date" type="date" value={editSale.date} onChange={(v) => setES((e) => ({ ...e, date: v }))} />
 
@@ -1926,7 +1955,7 @@ function CustomersSales({ data, reload }) {
                       <Inp label="Price/Brick (₹)" type="number" value={editSale.price_per_brick} onChange={(v) => setES((e) => ({ ...e, price_per_brick: Number(v || 0) }))} />
                     </G2>
 
-                    <Inp label="Total Amount (₹) — override if needed" type="number" value={editSale.total_amount} onChange={(v) => setES((e) => ({ ...e, total_amount: Number(v || 0) }))} />
+                    <Inp label="Total Amount (₹)" type="number" value={editSale.total_amount} onChange={(v) => setES((e) => ({ ...e, total_amount: Number(v || 0) }))} />
                     <Inp label="Location" value={editSale.location} onChange={(v) => setES((e) => ({ ...e, location: v }))} />
                     <Inp label="Note" value={editSale.note} onChange={(v) => setES((e) => ({ ...e, note: v }))} />
 
@@ -1940,7 +1969,9 @@ function CustomersSales({ data, reload }) {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                       <div>
                         <div style={{ fontWeight: 700, color: T.text }}>{s.customer}</div>
-                        <div style={{ fontSize: 12, color: T.muted }}>{s.date}{s.location ? " · " + s.location : ""}</div>
+                        <div style={{ fontSize: 12, color: T.muted }}>
+                          {s.date}{s.location ? " · " + s.location : ""}
+                        </div>
 
                         <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                           <Badge color={br?.color}>{br?.label}</Badge>
@@ -1953,9 +1984,13 @@ function CustomersSales({ data, reload }) {
                       </div>
 
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontWeight: 900, color: T.green, fontSize: 20 }}>{fmt(s.total_amount)}</div>
+                        <div style={{ fontWeight: 900, color: T.green, fontSize: 20 }}>
+                          {fmt(s.total_amount)}
+                        </div>
                         {due > 0 ? (
-                          <div style={{ color: T.red, fontWeight: 700, fontSize: 13 }}>Due: {fmt(due)}</div>
+                          <div style={{ color: T.red, fontWeight: 700, fontSize: 13 }}>
+                            Due: {fmt(due)}
+                          </div>
                         ) : (
                           <Badge color={T.green}>Paid ✓</Badge>
                         )}
@@ -1964,9 +1999,11 @@ function CustomersSales({ data, reload }) {
 
                     {(s.payments || []).length > 0 && (
                       <div style={{ marginBottom: 10 }}>
-                        <div style={{ fontSize: 11, color: T.muted, marginBottom: 5 }}>Payments received:</div>
+                        <div style={{ fontSize: 11, color: T.muted, marginBottom: 5 }}>
+                          Payments received / instalments:
+                        </div>
 
-                        {(s.payments || []).map((p) => (
+                        {(s.payments || []).map((p, index) => (
                           <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, marginBottom: 5 }}>
                             {editPay?.saleId === s.id && editPay?.payId === p.id ? (
                               <div style={{ display: "flex", gap: 5, flex: 1, alignItems: "center", flexWrap: "wrap" }}>
@@ -1985,12 +2022,17 @@ function CustomersSales({ data, reload }) {
                             ) : (
                               <>
                                 <span style={{ color: T.text }}>
-                                  {p.date} · <Badge color={pcol[p.mode] || T.muted}>{p.mode}</Badge>{p.note ? " · " + p.note : ""}
+                                  Instalment {index + 1}: {p.date} ·{" "}
+                                  <Badge color={pcol[p.mode] || T.muted}>{p.mode}</Badge>
+                                  {p.note ? " · " + p.note : ""}
                                 </span>
 
                                 <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
                                   <span style={{ color: T.green, fontWeight: 700 }}>+{fmt(p.amount)}</span>
-                                  <IBtn label="Edit" onClick={() => { setEP({ saleId: s.id, payId: p.id }); setEPF({ date: p.date, amount: p.amount, mode: p.mode, note: p.note || "" }); }} />
+                                  <IBtn label="Edit" onClick={() => {
+                                    setEP({ saleId: s.id, payId: p.id });
+                                    setEPF({ date: p.date, amount: p.amount, mode: p.mode, note: p.note || "" });
+                                  }} />
                                   <IBtn label="Delete" onClick={() => delPay(s.id, p.id)} danger />
                                 </div>
                               </>
@@ -2001,7 +2043,10 @@ function CustomersSales({ data, reload }) {
                     )}
 
                     <Row>
-                      <Btn sm color={T.blue} onClick={() => { setAPT(s.id); setPF({ date: today(), amount: String(Math.max(0, due)), mode: "Cash", note: "" }); }}>
+                      <Btn sm color={T.blue} onClick={() => {
+                        setAPT(s.id);
+                        setPF({ date: today(), amount: String(Math.max(0, due)), mode: "Cash", note: "" });
+                      }}>
                         + Add Payment
                       </Btn>
                       <IBtn label="Edit Sale" onClick={() => setES({ ...s })} />
@@ -2015,70 +2060,124 @@ function CustomersSales({ data, reload }) {
         </>
       )}
 
-      {sub === "By Customer" &&
-        data.customers.map((c) => {
-          const cs = data.sales.filter((s) => s.customer === c.name);
-          const totalB = cs.reduce((a, s) => a + Number(s.total_amount || 0), 0);
-          const totalD = cs.reduce((a, s) => a + saleDue(s), 0);
-
-          return (
-            <Card key={c.id} style={{ borderColor: totalD > 0 ? T.yellow + "44" : T.border }}>
-              {editCust?.id === c.id ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <Inp label="Name" value={editCust.name} onChange={(v) => setEC((e) => ({ ...e, name: v }))} />
-                  <Inp label="Phone" value={editCust.contact} onChange={(v) => setEC((e) => ({ ...e, contact: v }))} />
-                  <Inp label="Location" value={editCust.location} onChange={(v) => setEC((e) => ({ ...e, location: v }))} />
-                  <Inp label="Note" value={editCust.note} onChange={(v) => setEC((e) => ({ ...e, note: v }))} />
-                  <Row>
-                    <Btn sm color={T.green} onClick={saveEditCust}>Save</Btn>
-                    <Btn sm outline onClick={() => setEC(null)}>Cancel</Btn>
-                  </Row>
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div>
-                      <div style={{ fontWeight: 700, color: T.text, fontSize: 15 }}>{c.name}</div>
-                      <div style={{ fontSize: 12, color: T.muted }}>
-                        {c.contact ? c.contact + " · " : ""}{c.location}
-                      </div>
-                      {c.note && <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{c.note}</div>}
-                      <div style={{ fontSize: 13, marginTop: 6 }}>
-                        Total: <span style={{ color: T.green, fontWeight: 700 }}>{fmt(totalB)}</span> · {cs.length} sale(s)
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: "right" }}>
-                      {totalD > 0 ? (
-                        <>
-                          <div style={{ fontWeight: 900, color: T.red, fontSize: 18 }}>{fmt(totalD)}</div>
-                          <div style={{ fontSize: 11, color: T.muted }}>outstanding</div>
-                        </>
-                      ) : (
-                        <Badge color={T.green}>Clear ✓</Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
-                    <IBtn label="Edit" onClick={() => setEC({ ...c })} />
-                    <IBtn label="Delete" onClick={() => delCust(c.id)} danger />
-                  </div>
-                </>
-              )}
+      {sub === "By Customer" && (
+        <>
+          {data.customers.length === 0 && (
+            <Card>
+              <div style={{ color: T.muted, fontSize: 13 }}>No customers added yet.</div>
             </Card>
-          );
-        })}
+          )}
 
-      {sub === "By Customer" && data.customers.length === 0 && (
-        <Card>
-          <div style={{ color: T.muted, fontSize: 13 }}>No customers added yet.</div>
-        </Card>
+          {data.customers.map((c) => {
+            const cs = data.sales.filter((s) => s.customer === c.name);
+            const totalB = cs.reduce((a, s) => a + Number(s.total_amount || 0), 0);
+            const totalD = cs.reduce((a, s) => a + saleDue(s), 0);
+            const totalPaid = cs.reduce(
+              (a, s) => a + (s.payments || []).reduce((b, p) => b + Number(p.amount || 0), 0),
+              0
+            );
+            const totalInstalments = cs.reduce((a, s) => a + (s.payments || []).length, 0);
+
+            return (
+              <Card key={c.id} style={{ borderColor: totalD > 0 ? T.yellow + "44" : T.border }}>
+                {editCust?.id === c.id ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <Inp label="Name" value={editCust.name} onChange={(v) => setEC((e) => ({ ...e, name: v }))} />
+                    <Inp label="Phone" value={editCust.contact} onChange={(v) => setEC((e) => ({ ...e, contact: v }))} />
+                    <Inp label="Location" value={editCust.location} onChange={(v) => setEC((e) => ({ ...e, location: v }))} />
+                    <Inp label="Note" value={editCust.note} onChange={(v) => setEC((e) => ({ ...e, note: v }))} />
+                    <Row>
+                      <Btn sm color={T.green} onClick={saveEditCust}>Save</Btn>
+                      <Btn sm outline onClick={() => setEC(null)}>Cancel</Btn>
+                    </Row>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: T.text, fontSize: 15 }}>{c.name}</div>
+                        <div style={{ fontSize: 12, color: T.muted }}>
+                          {c.contact ? c.contact + " · " : ""}{c.location}
+                        </div>
+                        {c.note && <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{c.note}</div>}
+                      </div>
+
+                      <div style={{ textAlign: "right" }}>
+                        {totalD > 0 ? (
+                          <>
+                            <div style={{ fontWeight: 900, color: T.red, fontSize: 18 }}>{fmt(totalD)}</div>
+                            <div style={{ fontSize: 11, color: T.muted }}>outstanding</div>
+                          </>
+                        ) : (
+                          <Badge color={T.green}>Clear ✓</Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                      <div style={{ background: T.surface, borderRadius: 8, padding: 8 }}>
+                        <div style={{ fontSize: 9, color: T.muted }}>TOTAL SALES</div>
+                        <div style={{ color: T.green, fontWeight: 800 }}>{fmt(totalB)}</div>
+                      </div>
+                      <div style={{ background: T.surface, borderRadius: 8, padding: 8 }}>
+                        <div style={{ fontSize: 9, color: T.muted }}>PAID</div>
+                        <div style={{ color: T.blue, fontWeight: 800 }}>{fmt(totalPaid)}</div>
+                      </div>
+                      <div style={{ background: T.surface, borderRadius: 8, padding: 8 }}>
+                        <div style={{ fontSize: 9, color: T.muted }}>INSTALMENTS</div>
+                        <div style={{ color: T.accent, fontWeight: 800 }}>{totalInstalments}</div>
+                      </div>
+                    </div>
+
+                    {cs.length > 0 && (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ fontSize: 11, color: T.muted, marginBottom: 6 }}>
+                          Sale / instalment history
+                        </div>
+
+                        {cs.map((s) => {
+                          const paid = (s.payments || []).reduce((a, p) => a + Number(p.amount || 0), 0);
+                          const due = saleDue(s);
+
+                          return (
+                            <div key={s.id} style={{ background: T.surface, borderRadius: 8, padding: 10, marginBottom: 8 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ color: T.text, fontWeight: 700 }}>{s.date}</span>
+                                <span style={{ color: due > 0 ? T.red : T.green, fontWeight: 800 }}>
+                                  Left: {fmt(due)}
+                                </span>
+                              </div>
+
+                              <div style={{ fontSize: 12, color: T.muted, marginTop: 3 }}>
+                                Sale {fmt(s.total_amount)} · Paid {fmt(paid)} · {(s.payments || []).length} instalment(s)
+                              </div>
+
+                              {(s.payments || []).map((p, i) => (
+                                <div key={p.id} style={{ fontSize: 12, color: T.muted, marginTop: 4 }}>
+                                  Instalment {i + 1}: {fmt(p.amount)} on {p.date} via {p.mode}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+                      <IBtn label="Edit" onClick={() => setEC({ ...c })} />
+                      <IBtn label="Delete" onClick={() => delCust(c.id)} danger />
+                    </div>
+                  </>
+                )}
+              </Card>
+            );
+          })}
+        </>
       )}
 
       {sub === "Dues" && (
         <>
-          <div style={{ fontSize: 13, color: T.muted }}>All pending collections</div>
+          <div style={{ fontSize: 13, color: T.muted }}>All pending customer collections</div>
 
           {[...data.sales]
             .filter((s) => saleDue(s) > 0)
@@ -2094,13 +2193,16 @@ function CustomersSales({ data, reload }) {
                     <div>
                       <div style={{ fontWeight: 700, color: T.text }}>{s.customer}</div>
                       <div style={{ fontSize: 12, color: T.muted }}>{s.date}{s.location ? " · " + s.location : ""}</div>
+
                       <div style={{ fontSize: 13, marginTop: 4 }}>
-                        <Badge color={br?.color}>{br?.label}</Badge>{" "}
+                        <Badge color={br?.color}>{br?.label}</Badge>
                         <span style={{ color: T.muted, marginLeft: 6 }}>{fmtN(s.qty)} bricks</span>
                       </div>
+
                       <div style={{ fontSize: 13, marginTop: 6 }}>
-                        Sale: <span style={{ color: T.text, fontWeight: 600 }}>{fmt(s.total_amount)}</span> · Paid:{" "}
-                        <span style={{ color: T.green, fontWeight: 600 }}>{fmt(paid)}</span>
+                        Sale: <span style={{ color: T.text, fontWeight: 600 }}>{fmt(s.total_amount)}</span> ·
+                        Paid: <span style={{ color: T.green, fontWeight: 600 }}> {fmt(paid)}</span> ·
+                        Instalments: <span style={{ color: T.accent, fontWeight: 600 }}> {(s.payments || []).length}</span>
                       </div>
                     </div>
 
@@ -2113,10 +2215,10 @@ function CustomersSales({ data, reload }) {
                   {(s.payments || []).length > 0 && (
                     <>
                       <Hr />
-                      {(s.payments || []).map((p) => (
+                      {(s.payments || []).map((p, i) => (
                         <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 3 }}>
                           <span style={{ color: T.muted }}>
-                            {p.date} · {p.mode}{p.note ? " · " + p.note : ""}
+                            Instalment {i + 1}: {p.date} · {p.mode}{p.note ? " · " + p.note : ""}
                           </span>
                           <span style={{ color: T.green, fontWeight: 600 }}>+{fmt(p.amount)}</span>
                         </div>
@@ -2125,7 +2227,11 @@ function CustomersSales({ data, reload }) {
                   )}
 
                   <div style={{ marginTop: 10 }}>
-                    <Btn sm color={T.blue} onClick={() => { setAPT(s.id); setPF({ date: today(), amount: String(due), mode: "Cash", note: "" }); setSub("Sales"); }}>
+                    <Btn sm color={T.blue} onClick={() => {
+                      setAPT(s.id);
+                      setPF({ date: today(), amount: String(due), mode: "Cash", note: "" });
+                      setSub("Sales");
+                    }}>
                       + Add Payment
                     </Btn>
                   </div>
@@ -2168,7 +2274,7 @@ function CustomersSales({ data, reload }) {
             <Inp label="Note (optional)" value={sForm.note} onChange={(v) => sf({ note: v })} />
 
             <div style={{ fontSize: 12, color: T.muted, background: T.surface, borderRadius: 8, padding: 8 }}>
-              Add payments after saving — full, partial, or installments.
+              Add payments after saving — full, partial, or instalments.
             </div>
 
             <Btn onClick={submitSale} color={T.green}>{saving ? "Saving…" : "Record Sale"}</Btn>
@@ -2213,7 +2319,7 @@ function CustomersSales({ data, reload }) {
             <Inp label="Date" type="date" value={payForm.date} onChange={(v) => setPF((f) => ({ ...f, date: v }))} />
             <Inp label="Amount Received (₹)" type="number" value={payForm.amount} onChange={(v) => setPF((f) => ({ ...f, amount: v }))} />
             <Inp label="Payment Mode" value={payForm.mode} onChange={(v) => setPF((f) => ({ ...f, mode: v }))} options={PAY_MODES} />
-            <Inp label="Note (e.g. 1st installment)" value={payForm.note} onChange={(v) => setPF((f) => ({ ...f, note: v }))} />
+            <Inp label="Note (e.g. 1st instalment)" value={payForm.note} onChange={(v) => setPF((f) => ({ ...f, note: v }))} />
 
             <Btn onClick={submitPay} color={T.blue}>{saving ? "Saving…" : "Save Payment"}</Btn>
           </div>
